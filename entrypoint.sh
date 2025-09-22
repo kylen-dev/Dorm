@@ -1,22 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
-echo "⏳ Waiting for Postgres database at ${DB_HOST}:${DB_PORT}..."
+# Render provides $PORT env var. Default to 8080 if not set.
+PORT=${PORT:-8080}
 
-# Wait for Postgres to be ready
-until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME"; do
-  sleep 3
-done
+# Replace Apache’s default port with $PORT
+sed -i "s/Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf
+sed -i "s/:80/:${PORT}/" /etc/apache2/sites-available/000-default.conf
 
-echo "✅ Database is ready!"
+# Laravel setup
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan storage:link || true
 
-# Run Laravel migrations
+# Run migrations on boot (optional, safe if DB is empty)
 php artisan migrate --force || true
 
-# Cache Laravel config, routes, views
-php artisan config:cache || true
-php artisan route:cache || true
-php artisan view:cache || true
-
-echo "🚀 Starting Apache..."
-exec apache2-foreground
+# Start Apache
+apache2-foreground

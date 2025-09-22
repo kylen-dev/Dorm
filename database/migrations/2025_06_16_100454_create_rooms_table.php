@@ -6,31 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateRoomsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
-{
-    Schema::create('rooms', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('property_id')->constrained()->onDelete('cascade');
-        $table->string('name'); // e.g., "Room A", "2nd Floor Room"
-        $table->decimal('price', 10, 2);
-        //$table->integer('capacity'); // total number of people it can accommodate
-        //$table->integer('available_slots'); // current number of open slots
-        $table->enum('status', ['Available', 'Full'])->default('Available');
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('rooms', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('property_id')->constrained()->onDelete('cascade');
 
+            $table->string('name');
+            $table->decimal('price', 10, 2);
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
+            // keep original casing 'Available' to avoid breaking string checks in code
+            $table->string('status', 20)->default('Available');
+
+            $table->timestamps();
+        });
+    }
+
     public function down()
     {
         Schema::dropIfExists('rooms');

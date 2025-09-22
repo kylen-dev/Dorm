@@ -6,30 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateReviewsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
-{
-    Schema::create('reviews', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('tenant_id')->constrained('users')->onDelete('cascade');
-        $table->foreignId('room_id')->constrained()->onDelete('cascade');
-        $table->text('comment');
-        $table->text('reply')->nullable();
-        $table->unsignedTinyInteger('rating'); // 1 to 5
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('reviews', function (Blueprint $table) {
+            $table->id();
 
+            $table->foreignId('tenant_id')->constrained('users')->onDelete('cascade');
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
+            // final state: reviews reference properties (not rooms)
+            $table->foreignId('property_id')->constrained('properties')->onDelete('cascade');
+
+            $table->text('comment');
+            $table->text('reply')->nullable();
+
+            // tiny unsigned integer (1-5)
+            $table->unsignedTinyInteger('rating');
+
+            $table->timestamps();
+        });
+    }
+
     public function down()
     {
         Schema::dropIfExists('reviews');

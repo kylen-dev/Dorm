@@ -7,5 +7,7 @@ npm-debug.log
 .env.*.local
 Dockerfile
 docker-compose*.yml
+DiscGame/node_modules
+DiscGame/.expo
 .vscode
 .idea

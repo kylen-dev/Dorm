@@ -1,44 +1,45 @@
-# Base image
+# Base image with PHP + Apache
 FROM php:8.2-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git unzip zip libpng-dev libjpeg-dev libfreetype6-dev libpq-dev postgresql-client \
-    nodejs npm \
+    nodejs npm gettext-base \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_pgsql
+    && docker-php-ext-install gd pdo pdo_pgsql bcmath opcache
 
 # Enable Apache rewrite
 RUN a2enmod rewrite
 
-# Set Laravel public folder as web root
-RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
+# Copy Composer from official image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy Composer binary
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Copy only composer files first (for caching)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# Copy Laravel project files
+# Copy package.json for frontend build
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the project
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
-
-# Install Node dependencies and build assets using Laravel Mix
-RUN npm install
-RUN npm run prod   # Use Laravel Mix production build
+# Build frontend assets (Laravel Mix)
+RUN npm run production
 
 # Fix permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Copy entrypoint script
+# Copy and prepare entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose Apache port
-EXPOSE 80
+# Expose port (Render will override, but this helps locally)
+EXPOSE 8080
 
-# Run entrypoint
+# Use entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]

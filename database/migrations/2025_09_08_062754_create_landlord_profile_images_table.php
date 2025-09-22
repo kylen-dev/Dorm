@@ -6,11 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateLandlordProfileImagesTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::create('landlord_profile_images', function (Blueprint $table) {
@@ -19,11 +14,6 @@ class CreateLandlordProfileImagesTable extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::dropIfExists('landlord_profile_images');
