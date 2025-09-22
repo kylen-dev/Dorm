@@ -1,39 +1,57 @@
-# Use PHP 8.2 with Apache
+# -----------------------
+# Stage 1: build frontend
+# -----------------------
+FROM node:18-alpine AS node_builder
+WORKDIR /app
+
+# copy package manifest and install deps (cacheable)
+COPY package*.json ./
+RUN npm ci --no-audit --no-fund
+
+# copy source and build assets (Mix)
+COPY . .
+RUN npm run production
+
+# -----------------------
+# Stage 2: PHP + Apache
+# -----------------------
 FROM php:8.2-apache
 
-# Install required system dependencies
+# install system deps and php extensions
 RUN apt-get update && apt-get install -y \
     git unzip zip libpng-dev libjpeg-dev libfreetype6-dev libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_pgsql
+    && docker-php-ext-install gd pdo pdo_pgsql bcmath opcache \
+    && rm -rf /var/lib/apt/lists/*
 
-# Enable Apache rewrite module (needed for Laravel routes)
+# enable apache rewrite
 RUN a2enmod rewrite
 
-# Set Apache DocumentRoot to /var/www/html/public
+# set DocumentRoot to /var/www/html/public
 RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
 
-# Set working directory
 WORKDIR /var/www/html
 
-# Install Composer
+# composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy project files
+# copy composer files, install PHP deps (cache)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist \
+    && rm -rf ~/.composer/cache
+
+# copy app files
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# copy built assets from node_builder
+COPY --from=node_builder /app/public /var/www/html/public
 
-# Fix storage/cache permissions for Laravel
+# fix permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Copy entrypoint
+# copy entrypoint
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose Apache port
 EXPOSE 80
-
-# Run entrypoint
 ENTRYPOINT ["entrypoint.sh"]
