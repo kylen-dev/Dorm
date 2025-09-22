@@ -1,0 +1,27 @@
+# Laravel
+/vendor
+/node_modules
+/public/storage
+/storage/*.key
+/.env
+/.idea
+/.vscode
+/.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+/.sass-cache
+/.parcel-cache
+
+# Build/system
+/.env.backup
+/.env.*
+*.log
+.DS_Store
+npm-debug.log*
+yarn-error.log*
+.env.local
+.env.*.local
+
+# Optional (if you use IDE caches)
+.idea/
+.vscode/

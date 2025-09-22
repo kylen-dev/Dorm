@@ -1,0 +1,8 @@
+# force LF for shell scripts so Docker can execute them
+*.sh text eol=lf
+
+# keep php files as text
+*.php text
+*.js text
+*.json text
+*.css text
