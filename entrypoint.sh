@@ -14,7 +14,7 @@ php artisan route:cache
 php artisan view:cache
 php artisan storage:link || true
 
-# Run migrations on boot (optional, safe if DB is empty)
+# Run migrations on boot (safe if DB already migrated)
 php artisan migrate --force || true
 
 # Start Apache
